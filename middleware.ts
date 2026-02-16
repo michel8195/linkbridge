@@ -6,16 +6,30 @@ const { auth } = NextAuth(authConfig);
 const publicRoutes = ["/", "/precios", "/como-funciona"];
 const authRoutes = ["/login", "/registro"];
 
+function getDashboardUrl(role: string | undefined): string {
+  switch (role) {
+    case "ADMIN":
+      return "/admin";
+    case "SELLER":
+      return "/vendedor";
+    default:
+      return "/influencer";
+  }
+}
+
 export default auth((req) => {
   const { nextUrl } = req;
+  const pathname = nextUrl.pathname;
   const isLoggedIn = !!req.auth;
-  const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
-  const isAuthRoute = authRoutes.includes(nextUrl.pathname);
-  const isApiRoute = nextUrl.pathname.startsWith("/api");
-  const isOnboardingRoute = nextUrl.pathname.startsWith("/onboarding");
+  const isPublicRoute = publicRoutes.includes(pathname);
+  const isAuthRoute = authRoutes.includes(pathname);
+  const isApiRoute = pathname.startsWith("/api");
+  const isOnboardingRoute = pathname.startsWith("/onboarding");
 
+  // Always allow API routes
   if (isApiRoute) return;
 
+  // Auth routes: redirect logged-in users away
   if (isAuthRoute) {
     if (isLoggedIn) {
       const role = req.auth?.user?.role;
@@ -25,52 +39,62 @@ export default auth((req) => {
         return Response.redirect(new URL("/onboarding", nextUrl));
       }
 
-      const dashboardUrl =
-        role === "ADMIN"
-          ? "/admin"
-          : role === "SELLER"
-            ? "/vendedor"
-            : "/influencer";
-      return Response.redirect(new URL(dashboardUrl, nextUrl));
+      return Response.redirect(new URL(getDashboardUrl(role), nextUrl));
     }
     return;
   }
 
-  if (isPublicRoute) return;
+  // Public routes: always accessible
+  if (isPublicRoute) {
+    // If logged in and visiting landing, redirect to dashboard
+    if (isLoggedIn && pathname === "/") {
+      const role = req.auth?.user?.role;
+      const onboarding = req.auth?.user?.onboarding;
 
+      if (onboarding === "PENDING") {
+        return Response.redirect(new URL("/onboarding", nextUrl));
+      }
+
+      return Response.redirect(new URL(getDashboardUrl(role), nextUrl));
+    }
+    return;
+  }
+
+  // Everything below requires authentication
   if (!isLoggedIn) {
-    return Response.redirect(new URL("/login", nextUrl));
+    const callbackUrl = encodeURIComponent(pathname);
+    return Response.redirect(
+      new URL(`/login?callbackUrl=${callbackUrl}`, nextUrl)
+    );
   }
 
   const role = req.auth?.user?.role;
   const onboarding = req.auth?.user?.onboarding;
 
+  // Force onboarding for incomplete users
   if (onboarding === "PENDING" && !isOnboardingRoute) {
     return Response.redirect(new URL("/onboarding", nextUrl));
   }
 
+  // Redirect completed users away from onboarding
   if (onboarding === "COMPLETED" && isOnboardingRoute) {
-    const dashboardUrl =
-      role === "ADMIN"
-        ? "/admin"
-        : role === "SELLER"
-          ? "/vendedor"
-          : "/influencer";
-    return Response.redirect(new URL(dashboardUrl, nextUrl));
+    return Response.redirect(new URL(getDashboardUrl(role), nextUrl));
   }
 
   // Role-based route protection
-  if (nextUrl.pathname.startsWith("/influencer") && role !== "INFLUENCER") {
-    return Response.redirect(new URL("/login", nextUrl));
+  if (pathname.startsWith("/influencer") && role !== "INFLUENCER") {
+    return Response.redirect(new URL(getDashboardUrl(role), nextUrl));
   }
-  if (nextUrl.pathname.startsWith("/vendedor") && role !== "SELLER") {
-    return Response.redirect(new URL("/login", nextUrl));
+  if (pathname.startsWith("/vendedor") && role !== "SELLER") {
+    return Response.redirect(new URL(getDashboardUrl(role), nextUrl));
   }
-  if (nextUrl.pathname.startsWith("/admin") && role !== "ADMIN") {
-    return Response.redirect(new URL("/login", nextUrl));
+  if (pathname.startsWith("/admin") && role !== "ADMIN") {
+    return Response.redirect(new URL(getDashboardUrl(role), nextUrl));
   }
 });
 
 export const config = {
-  matcher: ["/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)"],
+  matcher: [
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+  ],
 };

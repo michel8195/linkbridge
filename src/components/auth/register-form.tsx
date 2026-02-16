@@ -36,8 +36,22 @@ export function RegisterForm() {
         return;
       }
 
+      // Auto-login after successful registration
+      const loginResult = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (loginResult?.error) {
+        toast.success("Cuenta creada. Inicia sesion para continuar.");
+        router.push("/login");
+        return;
+      }
+
       toast.success("Cuenta creada exitosamente");
-      router.push("/login");
+      // Hard navigation so middleware picks up the new auth cookie
+      window.location.href = "/onboarding";
     } catch {
       toast.error("Ocurrio un error inesperado");
     } finally {

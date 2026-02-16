@@ -39,8 +39,9 @@ export function LoginForm() {
         return;
       }
 
-      router.push("/onboarding");
-      router.refresh();
+      // Hard navigation so the middleware picks up the new auth cookie
+      // and redirects to the correct page based on role/onboarding status
+      window.location.href = "/onboarding";
     } catch {
       toast.error("Ocurrio un error inesperado");
     } finally {
