@@ -95,7 +95,7 @@ async function main() {
   });
   console.log("Seller user created:", seller.email);
 
-  // Seed all 166 products from curated catalog
+  // Seed all 163 products from curated catalog
   console.log(`Seeding ${PRODUCT_CATALOG.length} curated products...`);
 
   let productCount = 0;
@@ -110,6 +110,8 @@ async function main() {
         commissionRate: product.commissionRate,
         niche: product.niche,
         description: product.description,
+        imageUrl: product.imageUrl || null,
+        permalink: product.permalink || `https://articulo.mercadolibre.com.ar/${product.meliId.replace(/^(MLA)(\d+)$/, '$1-$2')}-_JM`,
       },
       create: {
         meliId: product.meliId,
@@ -117,7 +119,8 @@ async function main() {
         description: product.description,
         price: product.price,
         currency: product.currency,
-        permalink: `https://www.mercadolibre.com.ar/p/${product.meliId}`,
+        permalink: product.permalink || `https://articulo.mercadolibre.com.ar/${product.meliId.replace(/^(MLA)(\d+)$/, '$1-$2')}-_JM`,
+        imageUrl: product.imageUrl || null,
         niche: product.niche,
         commissionRate: product.commissionRate,
         country: product.country,

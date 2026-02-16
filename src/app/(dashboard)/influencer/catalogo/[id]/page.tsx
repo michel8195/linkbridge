@@ -1,28 +1,27 @@
-import { ArrowLeft, Tag } from "lucide-react";
+import { notFound } from "next/navigation";
+import { ArrowLeft, ExternalLink } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LinkGenerator } from "@/components/influencer/link-generator";
+import { getProductById } from "@/lib/queries/products";
 
 export const metadata = { title: "Detalle de producto" };
 
-// Mock data - in production, fetch from DB
-const product = {
-  id: "1",
-  title: "Auriculares Bluetooth TWS con Cancelacion de Ruido Activa",
-  description:
-    "Auriculares inalambricos de alta calidad con tecnologia ANC, 30 horas de bateria, resistencia al agua IPX5 y conectividad Bluetooth 5.3.",
-  price: 15999,
-  currency: "ARS",
-  commissionRate: 8,
-  niche: ["Tecnologia"],
-  country: "AR",
-  permalink: "https://www.mercadolibre.com.ar/auriculares-bluetooth",
-  categoryName: "Auriculares",
-};
+export default async function ProductDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const product = await getProductById(id);
 
-export default function ProductDetailPage() {
+  if (!product) {
+    notFound();
+  }
+
   const estimatedCommission =
     (product.price * product.commissionRate) / 100;
 
@@ -37,15 +36,29 @@ export default function ProductDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <div className="aspect-video rounded-xl bg-muted flex items-center justify-center">
-            <Tag className="h-16 w-16 text-muted-foreground/30" />
+          <div className="aspect-video rounded-xl bg-muted flex items-center justify-center overflow-hidden relative">
+            {product.imageUrl ? (
+              <Image
+                src={product.imageUrl}
+                alt={product.title}
+                fill
+                className="object-contain"
+                sizes="(max-width: 1024px) 100vw, 66vw"
+              />
+            ) : (
+              <div className="text-muted-foreground/30 text-sm">
+                Sin imagen
+              </div>
+            )}
           </div>
 
           <div>
             <h1 className="text-2xl font-bold">{product.title}</h1>
-            <p className="mt-2 text-muted-foreground">
-              {product.description}
-            </p>
+            {product.description && (
+              <p className="mt-2 text-muted-foreground">
+                {product.description}
+              </p>
+            )}
           </div>
 
           <Card>
@@ -66,10 +79,12 @@ export default function ProductDetailPage() {
                   {estimatedCommission.toLocaleString()})
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Categoria</span>
-                <span>{product.categoryName}</span>
-              </div>
+              {product.categoryName && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Categoria</span>
+                  <span>{product.categoryName}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Nichos</span>
                 <div className="flex gap-1">
@@ -83,6 +98,18 @@ export default function ProductDetailPage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Pais</span>
                 <Badge variant="outline">{product.country}</Badge>
+              </div>
+              <div className="pt-2">
+                <Button variant="outline" size="sm" asChild>
+                  <a
+                    href={product.permalink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Ver en MercadoLibre
+                    <ExternalLink className="ml-2 h-3 w-3" />
+                  </a>
+                </Button>
               </div>
             </CardContent>
           </Card>
