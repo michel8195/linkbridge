@@ -81,15 +81,18 @@ export default auth((req) => {
     return Response.redirect(new URL(getDashboardUrl(role), nextUrl));
   }
 
-  // Role-based route protection
-  if (pathname.startsWith("/influencer") && role !== "INFLUENCER") {
-    return Response.redirect(new URL(getDashboardUrl(role), nextUrl));
-  }
-  if (pathname.startsWith("/vendedor") && role !== "SELLER") {
-    return Response.redirect(new URL(getDashboardUrl(role), nextUrl));
-  }
-  if (pathname.startsWith("/admin") && role !== "ADMIN") {
-    return Response.redirect(new URL(getDashboardUrl(role), nextUrl));
+  // Role-based route protection (only if role is known)
+  if (role) {
+    const correctDashboard = getDashboardUrl(role);
+    if (pathname.startsWith("/influencer") && role !== "INFLUENCER") {
+      return Response.redirect(new URL(correctDashboard, nextUrl));
+    }
+    if (pathname.startsWith("/vendedor") && role !== "SELLER") {
+      return Response.redirect(new URL(correctDashboard, nextUrl));
+    }
+    if (pathname.startsWith("/admin") && role !== "ADMIN") {
+      return Response.redirect(new URL(correctDashboard, nextUrl));
+    }
   }
 });
 

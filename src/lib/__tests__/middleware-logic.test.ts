@@ -66,14 +66,18 @@ function resolveRoute(
     return { action: "redirect", to: getDashboardUrl(role) };
   }
 
-  if (pathname.startsWith("/influencer") && role !== "INFLUENCER") {
-    return { action: "redirect", to: getDashboardUrl(role) };
-  }
-  if (pathname.startsWith("/vendedor") && role !== "SELLER") {
-    return { action: "redirect", to: getDashboardUrl(role) };
-  }
-  if (pathname.startsWith("/admin") && role !== "ADMIN") {
-    return { action: "redirect", to: getDashboardUrl(role) };
+  // Role-based route protection (only if role is known)
+  if (role) {
+    const correctDashboard = getDashboardUrl(role);
+    if (pathname.startsWith("/influencer") && role !== "INFLUENCER") {
+      return { action: "redirect", to: correctDashboard };
+    }
+    if (pathname.startsWith("/vendedor") && role !== "SELLER") {
+      return { action: "redirect", to: correctDashboard };
+    }
+    if (pathname.startsWith("/admin") && role !== "ADMIN") {
+      return { action: "redirect", to: correctDashboard };
+    }
   }
 
   return { action: "allow" };
@@ -94,6 +98,24 @@ describe("getDashboardUrl", () => {
 
   it("defaults to /influencer for undefined role", () => {
     expect(getDashboardUrl(undefined)).toBe("/influencer");
+  });
+});
+
+describe("edge case: undefined role/onboarding (auth.config.ts missing callbacks)", () => {
+  it("should NOT create redirect loops when role is undefined", () => {
+    // This was the actual bug: auth.config.ts had no callbacks,
+    // so role/onboarding were undefined in the middleware.
+    // getDashboardUrl(undefined) returns "/influencer",
+    // but the role check `role !== 'INFLUENCER'` was true (undefined !== 'INFLUENCER'),
+    // causing an infinite redirect to /influencer.
+    const result = resolveRoute("/influencer", true, undefined, undefined);
+    // With undefined role, it should allow access (default to influencer)
+    expect(result).toEqual({ action: "allow" });
+  });
+
+  it("should handle undefined onboarding gracefully", () => {
+    const result = resolveRoute("/influencer", true, "INFLUENCER", undefined);
+    expect(result).toEqual({ action: "allow" });
   });
 });
 
