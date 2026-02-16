@@ -61,6 +61,11 @@ export async function completeOnboarding(
   role: "INFLUENCER" | "SELLER",
   data: Record<string, unknown>
 ) {
+  if (!userId) {
+    return { error: "Usuario no identificado" };
+  }
+
+  try {
   if (role === "INFLUENCER") {
     const { bio, niche, country, city, socialLinks } = data as {
       bio: string;
@@ -135,4 +140,8 @@ export async function completeOnboarding(
   }
 
   return { success: true };
+  } catch (error) {
+    console.error("Error completing onboarding:", error);
+    return { error: "Error al guardar el perfil. Intenta de nuevo." };
+  }
 }

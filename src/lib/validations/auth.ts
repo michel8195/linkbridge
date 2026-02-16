@@ -39,7 +39,7 @@ export const influencerOnboardingSchema = z.object({
           "TWITTER",
           "FACEBOOK",
         ]),
-        url: z.string().url("URL invalida"),
+        url: z.string().min(1, "URL requerida"),
         username: z.string().min(1, "Username requerido"),
         followers: z
           .number()

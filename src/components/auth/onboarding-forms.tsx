@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -160,6 +160,11 @@ function InfluencerForm({
     defaultValues: { niche: [], socialLinks: [] },
   });
 
+  // Sync socialLinks state to form so Zod validation sees actual data
+  useEffect(() => {
+    setValue("socialLinks", socialLinks, { shouldValidate: false });
+  }, [socialLinks, setValue]);
+
   function toggleNiche(niche: string) {
     const updated = selectedNiches.includes(niche)
       ? selectedNiches.filter((n) => n !== niche)
@@ -180,13 +185,19 @@ function InfluencerForm({
   }
 
   async function onSubmit(data: InfluencerOnboardingInput) {
+    if (!userId) {
+      toast.error("Sesion no encontrada. Recarga la pagina.");
+      return;
+    }
     setIsLoading(true);
     try {
       const result = await completeOnboarding(userId, "INFLUENCER", {
         ...data,
         socialLinks,
       });
-      if (result.success) {
+      if (result.error) {
+        toast.error(result.error);
+      } else if (result.success) {
         toast.success("Perfil completado!");
         await onComplete();
       }
@@ -399,6 +410,28 @@ function InfluencerForm({
                 Agregar red social
               </Button>
             </div>
+            {errors.socialLinks && (
+              <p className="text-sm text-destructive">
+                {typeof errors.socialLinks.message === "string"
+                  ? errors.socialLinks.message
+                  : "Completa los datos de al menos una red social"}
+              </p>
+            )}
+            {errors.bio && (
+              <p className="text-sm text-destructive">
+                Bio: {errors.bio.message}
+              </p>
+            )}
+            {errors.niche && (
+              <p className="text-sm text-destructive">
+                Nichos: {errors.niche.message}
+              </p>
+            )}
+            {errors.country && (
+              <p className="text-sm text-destructive">
+                Pais: {errors.country.message}
+              </p>
+            )}
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -444,10 +477,16 @@ function SellerForm({
   });
 
   async function onSubmit(data: SellerOnboardingInput) {
+    if (!userId) {
+      toast.error("Sesion no encontrada. Recarga la pagina.");
+      return;
+    }
     setIsLoading(true);
     try {
       const result = await completeOnboarding(userId, "SELLER", data);
-      if (result.success) {
+      if (result.error) {
+        toast.error(result.error);
+      } else if (result.success) {
         toast.success("Perfil completado!");
         await onComplete();
       }
