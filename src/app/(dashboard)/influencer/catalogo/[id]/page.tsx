@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,19 +36,12 @@ export default async function ProductDetailPage({
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <div className="aspect-video rounded-xl bg-muted flex items-center justify-center overflow-hidden relative">
-            {product.imageUrl ? (
-              <Image
-                src={product.imageUrl}
-                alt={product.title}
-                fill
-                className="object-contain"
-                sizes="(max-width: 1024px) 100vw, 66vw"
-              />
-            ) : (
-              <div className="text-muted-foreground/30 text-sm">
-                Sin imagen
-              </div>
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/api/meli-image?id=${product.meliId}`}
+              alt={product.title}
+              className="max-w-full max-h-full object-contain"
+            />
           </div>
 
           <div>

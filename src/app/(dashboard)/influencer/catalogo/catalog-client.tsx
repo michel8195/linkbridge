@@ -139,10 +139,10 @@ export function CatalogClient({ initialData }: CatalogClientProps) {
           <ProductCard
             key={product.id}
             id={product.id}
+            meliId={product.meliId}
             title={product.title}
             price={product.price}
             currency={product.currency}
-            imageUrl={product.imageUrl || undefined}
             commissionRate={product.commissionRate}
             niche={product.niche}
             country={product.country}

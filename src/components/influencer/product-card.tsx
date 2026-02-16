@@ -1,18 +1,18 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink, Tag } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 interface ProductCardProps {
   id: string;
+  meliId: string;
   title: string;
   price: number;
   currency: string;
-  imageUrl?: string;
   commissionRate: number;
   niche: string[];
   country: string;
@@ -20,25 +20,28 @@ interface ProductCardProps {
 
 export function ProductCard({
   id,
+  meliId,
   title,
   price,
   currency,
-  imageUrl,
   commissionRate,
   niche,
   country,
 }: ProductCardProps) {
   const estimatedCommission = (price * commissionRate) / 100;
+  const [imgError, setImgError] = useState(false);
 
   return (
     <Card className="group overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
       <div className="aspect-square relative bg-muted overflow-hidden">
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
+        {!imgError ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={`/api/meli-image?id=${meliId}`}
             alt={title}
-            fill
-            className="object-cover transition-transform group-hover:scale-105"
+            className="absolute inset-0 w-full h-full object-contain transition-transform group-hover:scale-105"
+            loading="lazy"
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="flex h-full items-center justify-center">
